@@ -1,3 +1,5 @@
+import java.util.*;
+
 public class WebCrawl{
     //global variables
     public static void main(String[] args){
@@ -16,16 +18,18 @@ public class WebCrawl{
                 }
             }
         }
-
-        System.out.println("URL: " + url + ". n = " + n);
-
-    }
-
-    public static void hop(String url, int n){
+        
+        Map<String, Integer> history = new HashMap<String, Integer>();
+        hop(url, n, history);
 
     }
 
-    public static Boolean print(String URL){
+    public static void hop(String url, int n, Map<String, Integer> history){
+        if(n <= 0){return;}
+
+    }
+
+    public static Boolean print(String url){
 
         return false; //base case
     }
