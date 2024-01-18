@@ -40,13 +40,15 @@ public class WebCrawl{
     }
 
     //download the HTML and store it into history
-    private static void hop(String urlString, int numHops, Map<String, Integer> history){
-        if(numHops <= 0){return;} //reached end of number to crawl
+    private static Boolean hop(String urlString, int numHops, Map<String, Integer> history){
+        if(numHops <= 0){return true;} //reached end of number to crawl
 
         //remove tailing slashes
         if(urlString.endsWith("/")){
             urlString = urlString.substring(0, urlString.length() - 1);
         }
+        //check in history
+        if(checkHist(urlString, history)){ return false; }
 
         URL link;
         InputStream buff = null;
@@ -58,6 +60,14 @@ public class WebCrawl{
             //connect to the url and download the html
             link = new URL(urlString);
             HttpURLConnection connect = (HttpURLConnection) link.openConnection();
+
+            //handle bad html codes
+            int htmlCode = connect.getResponseCode();
+            if(htmlCode >= 300 && htmlCode < 400){
+                String redirectUrl = connect.getHeaderField("Location");
+                if(redirectUrl != null){ return hop(redirectUrl, numHops - 1, history);}
+            }else if (htmlCode > 400){ return false; }
+
             buff = connect.getInputStream();
             br = new BufferedReader(new InputStreamReader(buff));
 
@@ -67,34 +77,32 @@ public class WebCrawl{
 
                 }
 
-                if(true){break;}
+                // if(true){break;}
             }
+            connect.disconnect();;
 
         }catch (MalformedURLException mue){
             System.out.println("Malformed URL: " + urlString);
-            return;
+            System.exit(1);
         }catch (IOException e){
             System.out.println("Error downloading HTML from: " + urlString);
-            return;
+            System.exit(1);
         }finally{
             if(buff != null){ //close Input stream
                 try{
                     buff.close();
                 }catch (IOException e){
                     e.printStackTrace();
+                    System.exit(1);
                 }
             }
         }
-   
+        return true;
     }
 
-    private static Boolean checkHist(String url,Map<String, Integer> history ){
-        //check that the URL has not been visited
-        if(history.containsKey(url)){
-            return true; //link has already been accessed
-        }else{
-            return false; // base case, link has not yet been accessed
-        }
+    //check to see if the url has already been accessed
+    private static Boolean checkHist(String url, Map<String, Integer> history){
+        return history.containsKey(url);
     }
 
 }
