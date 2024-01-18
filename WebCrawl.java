@@ -40,17 +40,18 @@ public class WebCrawl{
     }
 
     //download the HTML and store it into history
-    public static void hop(String urlString, int numHops, Map<String, Integer> history){
+    private static void hop(String urlString, int numHops, Map<String, Integer> history){
         if(numHops <= 0){return;} //reached end of number to crawl
 
-        //check that the URL has not been visited
-
+        //remove tailing slashes
+        if(urlString.endsWith("/")){
+            urlString = urlString.substring(0, urlString.length() - 1);
+        }
 
         URL link;
         InputStream buff = null;
         BufferedReader br;
         String line;
-        Boolean found = false;
 
         //download new HTML from URL
         try{
@@ -61,8 +62,12 @@ public class WebCrawl{
             br = new BufferedReader(new InputStreamReader(buff));
 
             //read the html by line
-            while( (line = br.readLine()) != null  && !found){
+            while( (line = br.readLine()) != null){
+                if(line.contains("<a href")){
 
+                }
+
+                if(true){break;}
             }
 
         }catch (MalformedURLException mue){
@@ -80,8 +85,16 @@ public class WebCrawl{
                 }
             }
         }
+   
+    }
 
-
+    private static Boolean checkHist(String url,Map<String, Integer> history ){
+        //check that the URL has not been visited
+        if(history.containsKey(url)){
+            return true; //link has already been accessed
+        }else{
+            return false; // base case, link has not yet been accessed
+        }
     }
 
 }
