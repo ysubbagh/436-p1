@@ -1,5 +1,6 @@
-/* WebCrawl 
+/* WebCrawl -- css436
 * Author: Yasmine Subbagh
+Date: 1/17/23
 */
 
 import java.io.BufferedReader;
@@ -8,67 +9,79 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.net.MalformedURLException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class WebCrawl{
     public static void main(String[] args){
         String url = "";
-        int n = -1;
+        int numHops = -1;
 
-        //error handling for arguemtns
+        //error handling for num of arguemtns
         if(args.length > 2 || args.length < 2){
             System.out.println("Incorrect arguments passed!");
             System.exit(0);
         }
 
-        //parse the arguments
-        for(int i = 0; i < 2; i++){
-            if(i == 0){ //get URL
-                url = args[i];
-            }else if(i == 1){ //get num
-                try{ //error handling for non int
-                    n = Integer.parseInt(args[i]);
-                }catch(NumberFormatException e){
-                    System.out.println("Second argument not interger.");
-                    System.exit(0);
-                }
-            }
+        //parse the arguments (error handling for var types)
+        try{ 
+            url = args[0];
+            numHops = Integer.parseInt(args[1]);
+        }catch(NumberFormatException e){
+            System.out.println("Incorrect argument values passed!");
+            System.exit(0);
         }
         
-        //start crawling and setup history storage
+        //setup history storage
         Map<String, Integer> history = new HashMap<String, Integer>();
-        hop(url, n, history);
 
+        //start crawling
+        hop(url, numHops, history);
     }
 
-    public static void hop(String url, int n, Map<String, Integer> history){
-        if(n <= 0){return;} //reached enf of number to crawl
+    //download the HTML and store it into history
+    public static void hop(String urlString, int numHops, Map<String, Integer> history){
+        if(numHops <= 0){return;} //reached end of number to crawl
+
+        //check that the URL has not been visited
+
 
         URL link;
         InputStream buff = null;
         BufferedReader br;
         String line;
+        Boolean found = false;
 
+        //download new HTML from URL
         try{
-            link = new URL(url);
-            buff = link.openStream();
-            br = new BufferedReader((new InputStreamReader((buff))));
+            //connect to the url and download the html
+            link = new URL(urlString);
+            HttpURLConnection connect = (HttpURLConnection) link.openConnection();
+            buff = connect.getInputStream();
+            br = new BufferedReader(new InputStreamReader(buff));
 
-            while((line = br.readLine()) != null){
-                //get links n print
+            //read the html by line
+            while( (line = br.readLine()) != null  && !found){
+
             }
+
         }catch (MalformedURLException mue){
-            mue.printStackTrace();;
-        }catch (IOException ioe){
-            ioe.printStackTrace();
+            System.out.println("Malformed URL: " + urlString);
+            return;
+        }catch (IOException e){
+            System.out.println("Error downloading HTML from: " + urlString);
+            return;
         }finally{
-            try{
-                if(buff != null) {buff.close();}
-            }catch (IOException ioe){
-                ioe.printStackTrace();
+            if(buff != null){ //close Input stream
+                try{
+                    buff.close();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
             }
         }
-        n--;
+
+
     }
 
 }
