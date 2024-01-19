@@ -15,80 +15,85 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class WebCrawl{
+    //global vars
+    private static int hopMax = 0;
+    private static int numHops = 0;
+    private static  Map<String, Integer> history = new HashMap<String, Integer>();
+    //error messages
+    private static String eArgs = "incorrect arguments passed.";
+    private static String eMalURL = "malformed URL.";
+    private static String eDownload = "downloading HTML error.";
+
     public static void main(String[] args){
         String url = "";
-        int numHops = -1;
 
         //error handling for num of arguemtns
-        if(args.length > 2 || args.length < 2){
-            System.out.println("Incorrect arguments passed!");
-            System.exit(0);
-        }
+        if(args.length > 2 || args.length < 2){ termination(eArgs); }
 
         //parse the arguments (error handling for var types)
         try{ 
             url = args[0];
-            numHops = Integer.parseInt(args[1]);
+            hopMax = Integer.parseInt(args[1]);
         }catch(NumberFormatException e){
-            System.out.println("Incorrect argument values passed!");
-            System.exit(0);
+            termination(eArgs);
         }
-        
-        //setup history storage
-        Map<String, Integer> history = new HashMap<String, Integer>();
 
         //start crawling
-        hop(url, numHops, history);
+        hop(url);
     }
 
     //download the HTML and store it into history
-    private static Boolean hop(String urlString, int numHops, Map<String, Integer> history){
-        if(numHops <= 0){return true;} //reached end of number to crawl
+    private static void hop(String urlString){
+        if(numHops == hopMax) {return;}
 
         //remove tailing slashes
         if(urlString.endsWith("/")){
             urlString = urlString.substring(0, urlString.length() - 1);
         }
-        //check in history
-        if(checkHist(urlString, history)){ return false; }
 
+        //check in history
+        if(checkHist(urlString)){ return; } //replace with something else
+    
         URL link;
         InputStream buff = null;
         BufferedReader br;
         String line;
 
-        //download new HTML from URL
+        //download new HTML file
         try{
             //connect to the url and download the html
             link = new URL(urlString);
             HttpURLConnection connect = (HttpURLConnection) link.openConnection();
 
-            //handle bad html codes
+            //get html codes
             int htmlCode = connect.getResponseCode();
             if(htmlCode >= 300 && htmlCode < 400){
-                String redirectUrl = connect.getHeaderField("Location");
-                if(redirectUrl != null){ return hop(redirectUrl, numHops - 1, history);}
-            }else if (htmlCode > 400){ return false; }
+                String redirectString = connect.getHeaderField("Location");
+                if(redirectString != null) { 
+                    numHops++;
+                    hop(redirectString); 
+                }
+            }else if(htmlCode >= 400) {
+                String eHTMLres = htmlCode + " client error response.";
+                termination(eHTMLres);
+            }
 
+            //connect to html file
             buff = connect.getInputStream();
             br = new BufferedReader(new InputStreamReader(buff));
 
-            //read the html by line
-            while( (line = br.readLine()) != null){
+            //read line by line
+            while((line = br.readLine()) != null ) {
                 if(line.contains("<a href")){
-                    newSource(line);
+                    processTag(line);
                 }
-
-                // if(true){break;}
             }
-            connect.disconnect();;
+            connect.disconnect();
 
         }catch (MalformedURLException mue){
-            System.out.println("Malformed URL: " + urlString);
-            System.exit(1);
+            termination(eMalURL);
         }catch (IOException e){
-            System.out.println("Error downloading HTML from: " + urlString);
-            System.exit(1);
+            termination(eDownload);
         }finally{
             if(buff != null){ //close Input stream
                 try{
@@ -99,30 +104,50 @@ public class WebCrawl{
                 }
             }
         }
-        return true;
+    
     }
 
-    private static void newSource(String line){
-        int start = line.indexOf("<a href>");
+    //process href tag
+    private static Boolean processTag(String line){
+        int start = line.indexOf("<a href");
         int end = line.indexOf(">", start);
 
-        if(start != -1 && end != -1){
-            String href = line.substring(start, end);
-            String url = getUrl(href);
+        if(start > -1 && end > -1){
+            String hrefLoc = line.substring(start, end);
+            String nextUrl = extractUrl(hrefLoc);
+
+            return true;
         }
+        return false; //base case
     }
 
-    private static String getUrl(String href){
-        String regex = "href\\s*=\\s*\"([^\"]*)\"";
+    //get the url from the href
+    private static String extractUrl(String hrefString){
+        String regex = "href\\s*=\\s*[\"']([^\"']*)[\"']";
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(href);
-        if(matcher.find()){ return matcher.group(1); }
-        return "";
+        Matcher matcher = pattern.matcher(hrefString);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return ""; //base case
     }
+
 
     //check to see if the url has already been accessed
-    private static Boolean checkHist(String url, Map<String, Integer> history){
+    private static Boolean checkHist(String url){
         return history.containsKey(url);
+    }
+
+    //print 
+    private static void print(String url){
+        System.out.println("Hop " + numHops + " : " + url);
+    }
+
+    //termination printing
+    private static void termination(String reason){
+        System.out.println("Crawler stopped after " + numHops + " hops.");
+        System.out.println("Crawler stopped because of " + reason);
+        System.exit(1);
     }
 
 }
