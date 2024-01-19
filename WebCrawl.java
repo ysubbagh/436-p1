@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.net.MalformedURLException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -74,7 +76,7 @@ public class WebCrawl{
             //read the html by line
             while( (line = br.readLine()) != null){
                 if(line.contains("<a href")){
-
+                    newSource(line);
                 }
 
                 // if(true){break;}
@@ -98,6 +100,24 @@ public class WebCrawl{
             }
         }
         return true;
+    }
+
+    private static void newSource(String line){
+        int start = line.indexOf("<a href>");
+        int end = line.indexOf(">", start);
+
+        if(start != -1 && end != -1){
+            String href = line.substring(start, end);
+            String url = getUrl(href);
+        }
+    }
+
+    private static String getUrl(String href){
+        String regex = "href\\s*=\\s*\"([^\"]*)\"";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(href);
+        if(matcher.find()){ return matcher.group(1); }
+        return "";
     }
 
     //check to see if the url has already been accessed
