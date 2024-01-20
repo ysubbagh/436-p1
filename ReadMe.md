@@ -1,7 +1,5 @@
 to compile ->
 javac --release 8 WebCrawl.java
 
-to run -> java WebCrawl {args}
-
-
-
+to run -> 
+java WebCrawl -URL- -#-
