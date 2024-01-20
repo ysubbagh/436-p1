@@ -35,7 +35,10 @@ public class WebCrawl{
         try{ 
             url = args[0];
             hopMax = Integer.parseInt(args[1]);
-        }catch(NumberFormatException e){
+            URL test = new URL(url); //make sure string passed is url
+        }catch(NumberFormatException e1){
+            termination(eArgs);
+        }catch(MalformedURLException e2){
             termination(eArgs);
         }
 
@@ -80,7 +83,7 @@ public class WebCrawl{
 
             //read line by line
             while((line = br.readLine()) != null ) {
-                if(line.contains("<a href")){ processTag(line); }
+                if(line.contains("<a href")){ processTag(line, urlString); }
             }
             connect.disconnect();
 
@@ -101,12 +104,12 @@ public class WebCrawl{
     }
 
     //process href tag
-    private static Boolean processTag(String line){
+    private static Boolean processTag(String line, String fromUrl){
         int start = line.indexOf("<a href");
         int end = line.indexOf(">", start);
         if(start > -1 && end > -1){
             String hrefLoc = line.substring(start, end);
-            String nextUrl = extractUrl(hrefLoc);
+            String nextUrl = extractUrl(hrefLoc, fromUrl);
             hop(nextUrl);
             return true;
         }
@@ -114,12 +117,19 @@ public class WebCrawl{
     }
 
     //get the url from the href
-    private static String extractUrl(String hrefString){
+    private static String extractUrl(String hrefString, String fromURL){
         String regex = "href\\s*=\\s*[\"']([^\"']*)[\"']";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(hrefString);
         if (matcher.find()) {
-            return matcher.group(1);
+            String newUrl = matcher.group(1);
+            try{ // fix issues with malformed URLs
+                URL baseUrl = new URL(fromURL);
+                URL fixedUrl = new URL(baseUrl, newUrl);
+                return fixedUrl.toString();
+            }catch (MalformedURLException e){
+                return ""; //loop back, dont fault
+            }
         }
         return ""; //base case
     }
