@@ -23,6 +23,7 @@ public class WebCrawl{
     private static String eArgs = "incorrect arguments passed.";
     private static String eMalURL = "malformed URL.";
     private static String eDownload = "downloading HTML error.";
+    private static String eCantCrawl = "no new recheable URLs found.";
 
     public static void main(String[] args){
         String url = "";
@@ -61,6 +62,7 @@ public class WebCrawl{
 
         //download new HTML file
         try{
+            print(urlString);
             //connect to the url and download the html
             link = new URL(urlString);
             HttpURLConnection connect = (HttpURLConnection) link.openConnection();
@@ -70,7 +72,6 @@ public class WebCrawl{
             if(htmlCode >= 300 && htmlCode < 400){
                 String redirectString = connect.getHeaderField("Location");
                 if(redirectString != null) { 
-                    numHops++;
                     hop(redirectString); 
                 }
             }else if(htmlCode >= 400) {
@@ -86,6 +87,7 @@ public class WebCrawl{
             while((line = br.readLine()) != null ) {
                 if(line.contains("<a href")){
                     processTag(line);
+                    
                 }
             }
             connect.disconnect();
@@ -116,6 +118,8 @@ public class WebCrawl{
             String hrefLoc = line.substring(start, end);
             String nextUrl = extractUrl(hrefLoc);
 
+            numHops++;
+            hop(nextUrl);
             return true;
         }
         return false; //base case
