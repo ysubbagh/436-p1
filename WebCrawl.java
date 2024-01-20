@@ -1,6 +1,6 @@
-/* WebCrawl -- css436
+/* 
+* WebCrawl -- p1. css436
 * Author: Yasmine Subbagh
-Date: 1/17/23
 */
 
 import java.io.BufferedReader;
@@ -53,7 +53,7 @@ public class WebCrawl{
         }
 
         //check in history
-        if(checkHist(urlString)){ return; } //replace with something else
+        if(checkHist(urlString)){ return; }
     
         URL link;
         InputStream buff = null;
@@ -69,16 +69,10 @@ public class WebCrawl{
 
             //get html codes
             int htmlCode = connect.getResponseCode();
-            if(htmlCode >= 300 && htmlCode < 400){
+            if(htmlCode >= 300 && htmlCode < 400){ //handle redirection
                 String redirectString = connect.getHeaderField("Location");
-                if(redirectString != null) { 
-                    hop(redirectString); 
-                }
-            }else if(htmlCode >= 400) {
-                return;
-                //String eHTMLres = htmlCode + " client error response.";
-                //termination(eHTMLres);
-            }
+                if(redirectString != null) { hop(redirectString); }
+            }else if(htmlCode >= 400) { return; }
 
             //connect to html file
             buff = connect.getInputStream();
@@ -86,10 +80,7 @@ public class WebCrawl{
 
             //read line by line
             while((line = br.readLine()) != null ) {
-                if(line.contains("<a href")){
-                    processTag(line);
-                    
-                }
+                if(line.contains("<a href")){ processTag(line); }
             }
             connect.disconnect();
 
@@ -107,14 +98,12 @@ public class WebCrawl{
                 }
             }
         }
-    
     }
 
     //process href tag
     private static Boolean processTag(String line){
         int start = line.indexOf("<a href");
         int end = line.indexOf(">", start);
-
         if(start > -1 && end > -1){
             String hrefLoc = line.substring(start, end);
             String nextUrl = extractUrl(hrefLoc);
@@ -135,13 +124,12 @@ public class WebCrawl{
         return ""; //base case
     }
 
-
     //check to see if the url has already been accessed
     private static Boolean checkHist(String url){
         return history.containsKey(url);
     }
 
-    //print 
+    //print and setup for next crawl 
     private static void print(String url){
         if(numHops == 0) {
             System.out.println("Starting link: " + url);
@@ -152,12 +140,11 @@ public class WebCrawl{
         numHops++;
     }
 
-    //termination printing
+    //termination and error printing
     private static void termination(String reason){
         System.out.println("Crawler stopped after " + numHops + " hops.");
         System.out.println("Crawler stopped because of " + reason);
         System.out.println("Remaning hops: " + (hopMax - numHops));
         System.exit(1);
     }
-
 }
