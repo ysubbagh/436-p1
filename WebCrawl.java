@@ -45,7 +45,7 @@ public class WebCrawl{
 
     //download the HTML and store it into history
     private static void hop(String urlString){
-        if(numHops == hopMax + 1){ System.exit(0); } //reached user defined end
+        if(numHops >= hopMax + 1){ System.exit(0); } //reached user defined end
 
         //remove tailing slashes
         if(urlString.endsWith("/")){
@@ -75,8 +75,9 @@ public class WebCrawl{
                     hop(redirectString); 
                 }
             }else if(htmlCode >= 400) {
-                String eHTMLres = htmlCode + " client error response.";
-                termination(eHTMLres);
+                return;
+                //String eHTMLres = htmlCode + " client error response.";
+                //termination(eHTMLres);
             }
 
             //connect to html file
@@ -117,8 +118,6 @@ public class WebCrawl{
         if(start > -1 && end > -1){
             String hrefLoc = line.substring(start, end);
             String nextUrl = extractUrl(hrefLoc);
-
-            numHops++;
             hop(nextUrl);
             return true;
         }
@@ -149,12 +148,15 @@ public class WebCrawl{
         }else{
             System.out.println("Hop " + numHops + " : " + url);
         }
+        history.put(url, numHops);
+        numHops++;
     }
 
     //termination printing
     private static void termination(String reason){
         System.out.println("Crawler stopped after " + numHops + " hops.");
         System.out.println("Crawler stopped because of " + reason);
+        System.out.println("Remaning hops: " + (hopMax - numHops));
         System.exit(1);
     }
 
