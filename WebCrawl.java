@@ -45,7 +45,7 @@ public class WebCrawl{
 
     //download the HTML and store it into history
     private static void hop(String urlString){
-        if(numHops == hopMax) {return;}
+        if(numHops == hopMax + 1){ System.exit(0); } //reached user defined end
 
         //remove tailing slashes
         if(urlString.endsWith("/")){
@@ -144,7 +144,11 @@ public class WebCrawl{
 
     //print 
     private static void print(String url){
-        System.out.println("Hop " + numHops + " : " + url);
+        if(numHops == 0) {
+            System.out.println("Starting link: " + url);
+        }else{
+            System.out.println("Hop " + numHops + " : " + url);
+        }
     }
 
     //termination printing
